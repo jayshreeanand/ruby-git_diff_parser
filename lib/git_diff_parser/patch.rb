@@ -4,6 +4,7 @@ module GitDiffParser
     RANGE_INFORMATION_LINE = /^@@ .+\+(?<line_number>\d+),/
     MODIFIED_LINE = /^\+(?!\+|\+)/
     NOT_REMOVED_LINE = /^[^-]/
+    REMOVED_LINE = /^\-(?!\-|\-)/
 
     attr_accessor :file, :body, :secure_hash
     # @!attribute [rw] file
@@ -60,11 +61,12 @@ module GitDiffParser
         case content
         when RANGE_INFORMATION_LINE
           line_number = Regexp.last_match[:line_number].to_i
-        when MODIFIED_LINE
+        when MODIFIED_LINE, REMOVED_LINE
           line = Line.new(
             content: content,
             number: line_number,
-            patch_position: patch_position
+            patch_position: patch_position,
+            status: content.match(REMOVED_LINE) ? 'removed' : 'added'
           )
           lines << line
           line_number += 1
