@@ -5,6 +5,7 @@ module GitDiffParser
     MODIFIED_LINE = /^\+(?!\+|\+)/
     NOT_REMOVED_LINE = /^[^-]/
     REMOVED_LINE = /^\-(?!\-|\-)/
+    NO_NEWLINE_WARNING = /No newline at end of file/
 
     attr_accessor :file, :body, :secure_hash
     # @!attribute [rw] file
@@ -53,7 +54,54 @@ module GitDiffParser
       @secure_hash = options[:secure_hash] || options['secure_hash'] if options[:secure_hash] || options['secure_hash']
     end
 
-    # @return [Array<Line>] changed lines
+    # @return [Array<Line>] parsed lines
+    def parsed_lines
+      line_number = 0
+
+      lines.each_with_index.inject([]) do |lines, (content, patch_position)|
+        case content
+        when RANGE_INFORMATION_LINE
+          line_number = Regexp.last_match[:line_number].to_i
+          line = Line.new(
+            content: content,
+            number: -1,
+            patch_position: -1,
+            status: 'unmodified'
+          )
+          lines << line
+        when MODIFIED_LINE, REMOVED_LINE
+          line = Line.new(
+            content: content,
+            number: line_number,
+            patch_position: patch_position,
+            status: content.match(REMOVED_LINE) ? 'removed' : 'added'
+          )
+          lines << line
+          line_number += 1
+        when NO_NEWLINE_WARNING
+          line = Line.new(
+            content: content,
+            number: -1,
+            patch_position: -1,
+            status: 'unmodified'
+          )
+          lines << line
+          line_number += 1
+        when NOT_REMOVED_LINE
+          line = Line.new(
+            content: content,
+            number: line_number,
+            patch_position: patch_position,
+            status: 'unmodifed'
+          )
+          lines << line
+          line_number += 1
+        end
+
+        lines
+      end
+    end
+
     def changed_lines
       line_number = 0
 
