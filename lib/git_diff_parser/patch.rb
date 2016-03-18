@@ -69,15 +69,23 @@ module GitDiffParser
             status: 'unmodified'
           )
           lines << line
-        when MODIFIED_LINE, REMOVED_LINE
+        when MODIFIED_LINE
           line = Line.new(
             content: content,
             number: line_number,
             patch_position: patch_position,
-            status: content.match(REMOVED_LINE) ? 'removed' : 'added'
+            status: 'added'
           )
           lines << line
           line_number += 1
+        when REMOVED_LINE
+          line = Line.new(
+            content: content,
+            number: -1,
+            patch_position: patch_position,
+            status: 'removed'
+          )
+          lines << line
         when NO_NEWLINE_WARNING
           line = Line.new(
             content: content,
