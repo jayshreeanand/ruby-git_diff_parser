@@ -94,7 +94,6 @@ module GitDiffParser
             status: 'unmodified'
           )
           lines << line
-          line_number += 1
         when NOT_REMOVED_LINE
           line = Line.new(
             content: content,
