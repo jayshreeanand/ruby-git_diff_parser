@@ -59,6 +59,7 @@ module GitDiffParser
       line_number = 0
 
       lines.each_with_index.inject([]) do |lines, (content, patch_position)|
+        content = content.force_encoding('UTF-8')
         case content
         when RANGE_INFORMATION_LINE
           line_number = Regexp.last_match[:line_number].to_i
