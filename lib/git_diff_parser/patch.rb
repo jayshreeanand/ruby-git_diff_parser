@@ -56,16 +56,17 @@ module GitDiffParser
 
     # @return [Array<Line>] parsed lines
     def parsed_lines
-      line_number = 0
+      line_number = old_line_number =  0
 
       lines.each_with_index.inject([]) do |lines, (content, patch_position)|
         content = content.force_encoding('UTF-8')
         case content
         when RANGE_INFORMATION_LINE
-          line_number = Regexp.last_match[:line_number].to_i
+          line_number = old_line_number = Regexp.last_match[:line_number].to_i
           line = Line.new(
             content: content,
             number: -1,
+            old_number: -1,
             patch_position: -1,
             status: 'unmodified'
           )
@@ -74,6 +75,7 @@ module GitDiffParser
           line = Line.new(
             content: content,
             number: line_number,
+            old_number: -1,
             patch_position: patch_position,
             status: 'added'
           )
@@ -83,14 +85,17 @@ module GitDiffParser
           line = Line.new(
             content: content,
             number: -1,
+            old_number: old_line_number,
             patch_position: patch_position,
             status: 'removed'
           )
           lines << line
+          old_line_number += 1
         when NO_NEWLINE_WARNING
           line = Line.new(
             content: content,
             number: -1,
+            old_number: -1,
             patch_position: -1,
             status: 'unmodified'
           )
@@ -99,11 +104,13 @@ module GitDiffParser
           line = Line.new(
             content: content,
             number: line_number,
+            old_number: old_line_number,
             patch_position: patch_position,
             status: 'unmodifed'
           )
           lines << line
           line_number += 1
+          old_line_number += 1
         end
 
         lines
@@ -121,6 +128,7 @@ module GitDiffParser
           line = Line.new(
             content: content,
             number: line_number,
+            old_number: -1,
             patch_position: patch_position,
             status: content.match(REMOVED_LINE) ? 'removed' : 'added'
           )

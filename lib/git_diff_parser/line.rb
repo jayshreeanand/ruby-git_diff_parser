@@ -15,10 +15,12 @@ module GitDiffParser
     # @option params [String] :status status (required)
     def initialize(params)
       fail(ArgumentError('number is required')) unless params[:number]
+      fail(ArgumentError('old number is required')) unless params[:old_number]
       fail(ArgumentError('content is required')) unless params[:content]
       fail(ArgumentError('patch_position is required')) unless params[:patch_position]
       fail(ArgumentError('status is required')) unless params[:status]
       @number = params[:number]
+      @old_number = params[:old_number]
       @content = params[:content]
       @patch_position = params[:patch_position]
       @status = params[:status]
