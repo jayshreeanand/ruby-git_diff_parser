@@ -1,7 +1,7 @@
 module GitDiffParser
   # Parsed patch
   class Patch
-    RANGE_INFORMATION_LINE = /^@@ .+\+(?<line_number>\d+),/
+    RANGE_INFORMATION_LINE = /^@@ \-(?<old_line_number>\d+),.+\+(?<line_number>\d+),/
     MODIFIED_LINE = /^\+(?!\+|\+)/
     NOT_REMOVED_LINE = /^[^-]/
     REMOVED_LINE = /^\-(?!\-|\-)/
@@ -62,7 +62,8 @@ module GitDiffParser
         content = content.force_encoding('UTF-8')
         case content
         when RANGE_INFORMATION_LINE
-          line_number = old_line_number = Regexp.last_match[:line_number].to_i
+          line_number = Regexp.last_match[:line_number].to_i
+          old_line_number = Regexp.last_match[:old_line_number].to_i
           line = Line.new(
             content: content,
             number: -1,
