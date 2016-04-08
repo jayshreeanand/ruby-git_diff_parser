@@ -107,7 +107,7 @@ module GitDiffParser
             number: line_number,
             old_number: old_line_number,
             patch_position: patch_position,
-            status: 'unmodifed'
+            status: 'unmodified'
           )
           lines << line
           line_number += 1
