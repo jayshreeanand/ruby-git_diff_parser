@@ -12,6 +12,7 @@ module GitDiffParser
     # @return [Patches<Patch>] parsed object
     def self.parse(contents)
       body = false
+      file_names = ''
       file_name = ''
       patch = []
       lines = contents.lines
@@ -19,7 +20,8 @@ module GitDiffParser
       parsed = new
       lines.each_with_index do |line, count|
         case line.chomp
-        when /^diff/
+        when /^diff(?<file_names>.*)/
+          file_names = Regexp.last_match[:file_names]
           unless patch.empty?
             parsed << Patch.new(patch.join("\n") + "\n", file: file_name)
             patch.clear
@@ -27,9 +29,18 @@ module GitDiffParser
           end
           body = false
         when /^Binary files/
-          if line.chomp.match(%r{Binary files .*b/(?<file_name>.*) differ})
+          if line.chomp.match(%r{Binary files .* b/(?<file_name>.*) differ})
             file_name = Regexp.last_match[:file_name]
           elsif line.match(%r{Binary files .*a/(?<file_name>.*) and})
+            file_name = Regexp.last_match[:file_name]
+          end
+          body = true
+          parsed << Patch.new('', file: file_name)
+          file_name = ''
+        when /^GIT binary patch/
+          if file_names.match(%r{--git .* b/(?<file_name>.*)})
+            file_name = Regexp.last_match[:file_name]
+          elsif file_names.match(%r{--git a/(?<file_name>.* )})
             file_name = Regexp.last_match[:file_name]
           end
           body = true
