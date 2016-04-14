@@ -26,6 +26,15 @@ module GitDiffParser
             file_name = ''
           end
           body = false
+        when /^Binary files/
+          if line.chomp.match(%r{Binary files .*b/(?<file_name>.*) differ})
+            file_name = Regexp.last_match[:file_name]
+          elsif line.match(%r{Binary files .*a/(?<file_name>.*) and})
+            file_name = Regexp.last_match[:file_name]
+          end
+          body = true
+          parsed << Patch.new('', file: file_name)
+          file_name = ''
         when %r{^\-\-\- a/(?<file_name>.*)}
           file_name = Regexp.last_match[:file_name]
           body = true
