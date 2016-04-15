@@ -1,7 +1,7 @@
 module GitDiffParser
   # Parsed line
   class Line
-    attr_reader :number, :patch_position, :status
+    attr_reader :number, :patch_position, :status, :is_conflict
 
     # @!attribute [r] number
     #   @return [Integer] line number
@@ -24,6 +24,7 @@ module GitDiffParser
       @content = params[:content]
       @patch_position = params[:patch_position]
       @status = params[:status]
+      @is_conflict = params[:is_conflict] || false
     end
 
     # @return [Boolean] true if line changed

@@ -6,7 +6,8 @@ module GitDiffParser
     NOT_REMOVED_LINE = /^[^-]/
     REMOVED_LINE = /^\-(?!\-|\-)/
     NO_NEWLINE_WARNING = /No newline at end of file/
-
+    CONFLICT_START_LINE = /.<<<<<<</
+    CONFLICT_END_LINE = /.>>>>>>>/
     attr_accessor :file, :body, :secure_hash
     # @!attribute [rw] file
     #   @return [String, nil] file path or nil
@@ -57,9 +58,12 @@ module GitDiffParser
     # @return [Array<Line>] parsed lines
     def parsed_lines
       line_number = old_line_number =  0
-
+      conflicted = false
       lines.each_with_index.inject([]) do |lines, (content, patch_position)|
         content = content.force_encoding('UTF-8')
+        if content.match(CONFLICT_START_LINE)
+          conflicted = true
+        end
         case content
         when RANGE_INFORMATION_LINE
           line_number = Regexp.last_match[:line_number].to_i
@@ -69,7 +73,8 @@ module GitDiffParser
             number: -1,
             old_number: -1,
             patch_position: -1,
-            status: 'unmodified'
+            status: 'unmodified',
+            is_conflict: false
           )
           lines << line
         when MODIFIED_LINE
@@ -78,7 +83,8 @@ module GitDiffParser
             number: line_number,
             old_number: -1,
             patch_position: patch_position,
-            status: 'added'
+            status: 'added',
+            is_conflict: conflicted
           )
           lines << line
           line_number += 1
@@ -88,7 +94,8 @@ module GitDiffParser
             number: -1,
             old_number: old_line_number,
             patch_position: patch_position,
-            status: 'removed'
+            status: 'removed',
+            is_conflict: conflicted
           )
           lines << line
           old_line_number += 1
@@ -98,7 +105,8 @@ module GitDiffParser
             number: -1,
             old_number: -1,
             patch_position: -1,
-            status: 'unmodified'
+            status: 'unmodified',
+            is_conflict: conflicted
           )
           lines << line
         when NOT_REMOVED_LINE
@@ -107,13 +115,16 @@ module GitDiffParser
             number: line_number,
             old_number: old_line_number,
             patch_position: patch_position,
-            status: 'unmodified'
+            status: 'unmodified',
+            is_conflict: conflicted
           )
           lines << line
           line_number += 1
           old_line_number += 1
         end
-
+        if content.match(CONFLICT_END_LINE)
+          conflicted = false
+        end
         lines
       end
     end
@@ -131,6 +142,7 @@ module GitDiffParser
             number: line_number,
             old_number: -1,
             patch_position: patch_position,
+            is_conflict: false,
             status: content.match(REMOVED_LINE) ? 'removed' : 'added'
           )
           lines << line
