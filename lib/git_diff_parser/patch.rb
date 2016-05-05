@@ -59,6 +59,7 @@ module GitDiffParser
     def parsed_lines
       line_number = old_line_number =  0
       conflicted = false
+      result = {}
       lines.each_with_index.inject([]) do |lines, (content, patch_position)|
         content = content.force_encoding('UTF-8')
         if content.match(CONFLICT_START_LINE)
@@ -76,7 +77,7 @@ module GitDiffParser
             status: 'unmodified',
             is_conflict: false
           )
-          lines << line
+          result[patch_position] = line
         when MODIFIED_LINE
           line = Line.new(
             content: content,
@@ -86,7 +87,7 @@ module GitDiffParser
             status: 'added',
             is_conflict: conflicted
           )
-          lines << line
+          result[patch_position] = line
           line_number += 1
         when REMOVED_LINE
           line = Line.new(
@@ -97,7 +98,7 @@ module GitDiffParser
             status: 'removed',
             is_conflict: conflicted
           )
-          lines << line
+          result[patch_position] = line
           old_line_number += 1
         when NO_NEWLINE_WARNING
           line = Line.new(
@@ -108,7 +109,7 @@ module GitDiffParser
             status: 'unmodified',
             is_conflict: conflicted
           )
-          lines << line
+          result[patch_position] = line
         when NOT_REMOVED_LINE
           line = Line.new(
             content: content,
@@ -118,14 +119,14 @@ module GitDiffParser
             status: 'unmodified',
             is_conflict: conflicted
           )
-          lines << line
+          result[patch_position] = line
           line_number += 1
           old_line_number += 1
         end
         if content.match(CONFLICT_END_LINE)
           conflicted = false
         end
-        lines
+        result
       end
     end
 
