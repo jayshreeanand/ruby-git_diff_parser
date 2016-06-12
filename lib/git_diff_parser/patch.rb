@@ -62,6 +62,9 @@ module GitDiffParser
       result = {}
       lines.each_with_index.inject([]) do |lines, (content, patch_position)|
         content = content.force_encoding('UTF-8')
+        unless content.valid_encoding?
+          content = content.scrub
+        end
         if content.match(CONFLICT_START_LINE)
           conflicted = true
         end
